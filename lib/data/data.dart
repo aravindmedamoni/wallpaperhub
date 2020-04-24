@@ -1,6 +1,14 @@
 
 import 'package:wallpaperhub/models/category.dart';
 
+const String APIKEY = "Enter Your Api key";
+const String url = "https://api.pexels.com/v1/curated?per_page=105&page=1";
+const String searchImagesUrl = "https://api.pexels.com/v1/search?query=example+query&per_page=15&page=1";
+const header = {
+  'Authorization':APIKEY
+};
+
+
 List<Category> getCategories(){
   List<Category> categories = [
     Category(imageUrl: "https://images.pexels.com/photos/545008/pexels-photo-545008.jpeg?auto=compress&cs=tinysrgb&dpr=2&w=500",categoryName: "Street Art"),

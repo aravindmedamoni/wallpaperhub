@@ -1,6 +1,7 @@
 
 import 'package:flutter/material.dart';
-Widget brandName(){
+Widget brandName({String brandName}){
+
   return RichText(text: TextSpan(
     children: <TextSpan>[
       TextSpan(text: "Wallpaper",style: TextStyle(color: Colors.black54,fontSize: 24,fontWeight: FontWeight.w800)),
