@@ -1,12 +1,15 @@
 
 import 'dart:convert';
 
+import 'package:connectivity/connectivity.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:wallpaperhub/data/data.dart';
+import 'package:wallpaperhub/interceptors/dio_connectivity_request_retrier.dart';
+import 'package:wallpaperhub/interceptors/retry_onconnection_change_interceptor.dart';
 import 'package:wallpaperhub/models/wallpaper.dart';
 import 'package:wallpaperhub/views/myhomepage.dart';
-import 'package:wallpaperhub/widgets/brandname.dart';
+
 
 class CategoryPaperAttributes{
   final String categoryName;
@@ -20,15 +23,20 @@ class Categories extends StatefulWidget {
 }
 
 class _CategoriesState extends State<Categories> {
+  //list for wallpaper collection
   List<Wallpaper> wallPapers = [];
-  String searcheName;
+  //from this  you need to call the futureBuilder's future property
   Future<List<Wallpaper>> futureResponse;
+  //create a instance for the dio package
+  Dio dio;
 
-  Future<List<Wallpaper>> getSearchWallPapers(String searchName) async{
-   // wallPapers.clear();
-    var response = await http.get("https://api.pexels.com/v1/search?query=$searchName&per_page=105&page=1",headers: header);
+  //method for getting the future WallPaper Collection
+  Future<List<Wallpaper>> getSearchWallPapers(String categoryName) async{
+    Response response = await dio.get("https://api.pexels.com/v1/search?query=$categoryName&per_page=105&page=1",options: Options(
+        headers: header
+    ));
     if(response.statusCode ==200){
-      Map<String,dynamic> jsonData = jsonDecode(response.body);
+      Map<String,dynamic> jsonData = response.data;
       jsonData['photos'].forEach((element){
         Wallpaper wallpaper = Wallpaper();
         wallpaper = Wallpaper.fromJson(element);
@@ -42,8 +50,13 @@ class _CategoriesState extends State<Categories> {
 
   @override
   void initState() {
+    dio = Dio();
     futureResponse = getSearchWallPapers(widget.categoryPaperAttributes.categoryName);
     super.initState();
+
+//    dio.interceptors.add(RetryOnConnectionChangeInterceptor(
+//        dioConnectivityRequestRetrier: (DioConnectivityRequestRetrier(dio: dio,
+//            connectivity: Connectivity()))));
   }
   @override
   Widget build(BuildContext context) {
@@ -51,7 +64,6 @@ class _CategoriesState extends State<Categories> {
       appBar: AppBar(
         title: Center(child: RichText(text:
               TextSpan(text: widget.categoryPaperAttributes.categoryName,style: TextStyle(color: Colors.blue,fontSize: 24,fontWeight: FontWeight.w800)),
-
         ),),
       ),
       body: Container(
@@ -71,11 +83,16 @@ class _CategoriesState extends State<Categories> {
                       return Center(child: CircularProgressIndicator());
                     case ConnectionState.done:
                       if(snapShot.hasData){
-                        return WallPaperCollection(
-                          wallpapers: wallPapers,
+                        return ListView(
+                          shrinkWrap: true,
+                          children: <Widget>[
+                            WallPaperCollection(
+                              wallpapers: wallPapers,
+                            ),
+                          ],
                         );
                       }else{
-                        return Center(child: CircularProgressIndicator(),);
+                        return Center(child: LinearProgressIndicator(),);
                       }
                   }
                   return Text("data");

@@ -1,10 +1,10 @@
 
 import 'package:wallpaperhub/models/category.dart';
 
-const String APIKEY = "Enter Your Api key";
+const String APIKEY = "563492ad6f91700001000001900744a9962149d2a813d44e91dec444";
 const String url = "https://api.pexels.com/v1/curated?per_page=105&page=1";
 const String searchImagesUrl = "https://api.pexels.com/v1/search?query=example+query&per_page=15&page=1";
-const header = {
+var header = {
   'Authorization':APIKEY
 };
 

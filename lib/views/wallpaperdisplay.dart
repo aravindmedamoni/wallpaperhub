@@ -9,8 +9,8 @@ import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 class WallPaperDisplayAttributes{
-  final String imagUrl;
-  WallPaperDisplayAttributes({this.imagUrl});
+  final String imageUrl;
+  WallPaperDisplayAttributes({this.imageUrl});
 }
 
 class WallPaperDisplay extends StatelessWidget {
@@ -34,14 +34,14 @@ class WallPaperDisplay extends StatelessWidget {
         child: Stack(
           children: <Widget>[
             Hero(
-              tag: wallPaperDisplayAttributes.imagUrl,
-                child: Image.network(wallPaperDisplayAttributes.imagUrl, height: MediaQuery.of(context).size.height,
+              tag: wallPaperDisplayAttributes.imageUrl,
+                child: Image.network(wallPaperDisplayAttributes.imageUrl, height: MediaQuery.of(context).size.height,
                   width: MediaQuery.of(context).size.width,fit: BoxFit.cover,)),
             Positioned(
               left: MediaQuery.of(context).size.width/6,
               right: MediaQuery.of(context).size.width/6,
-              top: MediaQuery.of(context).size.height/1.4,
-              bottom: MediaQuery.of(context).size.height/10,
+              top: MediaQuery.of(context).size.height/1.5,
+              bottom: MediaQuery.of(context).size.height/20,
               child: Container(
                 child: Column(
                   children: <Widget>[
@@ -55,8 +55,16 @@ class WallPaperDisplay extends StatelessWidget {
                         child: Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0,vertical: 4.0),
                           child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: <Widget>[
-                              Text('Set WallPaper',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 20.0)),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: <Widget>[
+                                  Icon(Icons.cloud_download,size: 30,color: Colors.white,),
+                                  SizedBox(width: 10,),
+                                  Text('WallPaper',style: TextStyle(color: Colors.white,fontWeight: FontWeight.bold,fontSize: 20.0)),
+                                ],
+                              ),
                               SizedBox(
                                 height: 6.0,
                               ),
@@ -67,7 +75,7 @@ class WallPaperDisplay extends StatelessWidget {
                       ),
                       onTap: (){
                         _save();
-                        Navigator.pop(context);
+                       // Navigator.pop(context);
                       },
                     ),
                     SizedBox(
@@ -89,7 +97,7 @@ class WallPaperDisplay extends StatelessWidget {
 
  _save() async {
   await _askPermission();
-   var response = await Dio().get(wallPaperDisplayAttributes.imagUrl,
+   var response = await Dio().get(wallPaperDisplayAttributes.imageUrl,
        options: Options(responseType: ResponseType.bytes));
    filePathResult =
    await ImageGallerySaver.saveImage(Uint8List.fromList(response.data));
@@ -110,8 +118,10 @@ class WallPaperDisplay extends StatelessWidget {
  }
 
  Future<void> setAsWallPaper() async{
+   // sending the map argument to the native android to handle the wallpaper setting
+   Map<String,dynamic> imageMap={"text":filePathResult};
     try{
-     final int result = await platForm.invokeMethod("setWallPaper",{"text":filePathResult});
+     final int result = await platForm.invokeMethod("setWallPaper",imageMap);
     }catch(e){
       print(e.toString());
       Navigator.pop(mContext);

@@ -1,8 +1,12 @@
 import 'dart:convert';
 
+import 'package:connectivity/connectivity.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:wallpaperhub/data/data.dart';
+import 'package:wallpaperhub/interceptors/dio_connectivity_request_retrier.dart';
+import 'package:wallpaperhub/interceptors/retry_onconnection_change_interceptor.dart';
 import 'package:wallpaperhub/models/category.dart';
 import 'package:wallpaperhub/models/wallpaper.dart';
 import 'package:wallpaperhub/views/categories.dart';
@@ -16,33 +20,50 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  //list for the categories
   List<Category> categories = List();
+  //list for the wallpapers
   List<Wallpaper> wallpapers = List();
+  //search controller for the searching the particular collection
   TextEditingController searchController = TextEditingController();
+  //from this  you need to call the futureBuilder's future property
   Future<List<Wallpaper>> futureResponse;
+  //Create a reference for the Dio
+  Dio dio;
 
+  //this is the future function getting the wallpapers Collection
   Future<List<Wallpaper>> getWallpaperList() async {
-    http.Response response = await http.get(url, headers: header);
+    wallpapers.clear();
+   Response response = await dio.get(url,options:Options(
+     headers: header
+   ));
     if (response.statusCode == 200) {
       // print(response.body.toString());
-      Map<String, dynamic> jsonData = jsonDecode(response.body);
+      Map<String, dynamic> jsonData = response.data;
       jsonData['photos'].forEach((element) {
         Wallpaper wallpaper = Wallpaper();
         wallpaper = Wallpaper.fromJson(element);
         wallpapers.add(wallpaper);
       });
     }
+    setState(() {
+      //for updating the wallpaperslist
+      categories = getCategories();
+    });
     return wallpapers;
-//    setState(() {
-//      //for updating the wallpaperslist
-//    });
+
   }
 
   @override
   void initState() {
+    dio = Dio();
     futureResponse = getWallpaperList();
     categories = getCategories();
     super.initState();
+
+//    dio.interceptors.add(RetryOnConnectionChangeInterceptor(
+//        dioConnectivityRequestRetrier: (DioConnectivityRequestRetrier(dio: dio,
+//            connectivity: Connectivity()))));
   }
 
   @override
@@ -51,6 +72,11 @@ class _MyHomePageState extends State<MyHomePage> {
       appBar: AppBar(
         title: Center(child: brandName()),
         elevation: 0.0,
+        actions: <Widget>[
+          IconButton(icon: Icon(Icons.refresh,size: 30,),onPressed: (){
+            getWallpaperList();
+          })
+        ],
       ),
       body: Container(
         child: ListView(
@@ -133,7 +159,7 @@ class _MyHomePageState extends State<MyHomePage> {
                         ],
                       );
                     }else{
-                      return CircularProgressIndicator();
+                      return Center(child: LinearProgressIndicator());
                     }
                 }
                 return Text("");
@@ -214,7 +240,7 @@ class WallPaperCollection extends StatelessWidget {
               child: InkWell(
                 onTap: (){
                   Navigator.push(context, MaterialPageRoute(builder: (_){
-                    return WallPaperDisplay(wallPaperDisplayAttributes: WallPaperDisplayAttributes(imagUrl: wallpaper.src.portrait),);
+                    return WallPaperDisplay(wallPaperDisplayAttributes: WallPaperDisplayAttributes(imageUrl: wallpaper.src.portrait),);
                   }));
                 },
                 child: Container(

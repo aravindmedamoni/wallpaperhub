@@ -1,9 +1,13 @@
 
 import 'dart:convert';
 
+import 'package:connectivity/connectivity.dart';
+import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:wallpaperhub/data/data.dart';
+import 'package:wallpaperhub/interceptors/dio_connectivity_request_retrier.dart';
+import 'package:wallpaperhub/interceptors/retry_onconnection_change_interceptor.dart';
 import 'package:wallpaperhub/models/wallpaper.dart';
 import 'package:wallpaperhub/views/myhomepage.dart';
 import 'package:wallpaperhub/widgets/brandname.dart';
@@ -20,16 +24,25 @@ class SearchWallPaper extends StatefulWidget {
 }
 
 class _SearchWallPaperState extends State<SearchWallPaper> {
+  //search controller for search for particular Collection
   TextEditingController searchController = TextEditingController();
+  //create a list for the wallpapers
   List<Wallpaper> wallPapers = [];
+  //string for storing the searched Collection Name
   String searchedName;
+  //from this  you need to call the futureBuilder's future property
   Future<List<Wallpaper>> futureResponse;
-  
+  //create instance for Dio Package
+  Dio dio;
+
+  //method for getting the future WallPaper Collection
   Future<List<Wallpaper>> getSearchWallPapers(String searchName) async{
     wallPapers.clear();
-    var response = await http.get("https://api.pexels.com/v1/search?query=$searchName&per_page=105&page=1",headers: header);
+    Response response = await dio.get("https://api.pexels.com/v1/search?query=$searchName&per_page=105&page=1", options: Options(
+      headers: header
+    ));
     if(response.statusCode ==200){
-      Map<String,dynamic> jsonData = jsonDecode(response.body);
+      Map<String,dynamic> jsonData = response.data;
       jsonData['photos'].forEach((element){
         Wallpaper wallpaper = Wallpaper();
         wallpaper = Wallpaper.fromJson(element);
@@ -44,9 +57,14 @@ class _SearchWallPaperState extends State<SearchWallPaper> {
   }
   @override
   void initState() {
+    dio = Dio();
    searchController.text = widget.searchWallPaperAttributes.searchQuery;
    futureResponse=getSearchWallPapers(searchController.text);
     super.initState();
+
+//    dio.interceptors.add(RetryOnConnectionChangeInterceptor(
+//        dioConnectivityRequestRetrier: (DioConnectivityRequestRetrier(dio: dio,
+//            connectivity: Connectivity()))));
   }
   @override
   Widget build(BuildContext context) {
@@ -125,7 +143,7 @@ class _SearchWallPaperState extends State<SearchWallPaper> {
                         ],
                       );
                     }else{
-                      return Center(child: CircularProgressIndicator());
+                      return Center(child: LinearProgressIndicator());
                     }
                 }
                 return Text("data");
